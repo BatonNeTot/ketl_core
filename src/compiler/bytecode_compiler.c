@@ -1,7 +1,7 @@
 ﻿//🍲ketl
 #include "ketl/compiler/bytecode_compiler.h"
 
-#include "syntax_node.h"
+#include "ketl/compiler/syntax_node.h"
 
 void ketlInitBytecodeCompiler(KETLBytecodeCompiler* compiler) {
 	ketlInitObjectPool(&compiler->syntaxNodePool, sizeof(KETLSyntaxNode), 16);

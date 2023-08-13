@@ -6,7 +6,7 @@
 
 #include "token.h"
 #include "lexer.h"
-#include "syntax_node.h"
+#include "ketl/compiler/syntax_node.h"
 #include "bnf_node.h"
 #include "bnf_scheme.h"
 #include "ketl/object_pool.h"

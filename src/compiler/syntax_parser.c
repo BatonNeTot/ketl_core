@@ -2,7 +2,7 @@
 #include "syntax_parser.h"
 
 #include "token.h"
-#include "syntax_node.h"
+#include "ketl/compiler/syntax_node.h"
 #include "bnf_node.h"
 #include "bnf_parser.h"
 #include "ketl/stack.h"
