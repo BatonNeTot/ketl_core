@@ -40,13 +40,10 @@ set_property(TARGET ${PROJECT_TEST_TARGET} PROPERTY CXX_STANDARD 20)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_TEST_TARGET})
 
-
-add_subdirectory ("dependencies_tests")
-
 target_compile_definitions(${PROJECT_TEST_TARGET} PRIVATE _AMD64_)
 
 target_link_directories(${PROJECT_TEST_TARGET} PRIVATE "lib")
-target_link_libraries(${PROJECT_TEST_TARGET} ${PROJECT_TARGET} lua51 luajit)
+target_link_libraries(${PROJECT_TEST_TARGET} ${PROJECT_TARGET})
 target_include_directories(${PROJECT_TEST_TARGET} PUBLIC "include")
 target_include_directories(${PROJECT_TEST_TARGET} PRIVATE "src")
 target_include_directories(${PROJECT_TEST_TARGET} PRIVATE "tests")
