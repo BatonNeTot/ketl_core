@@ -10,12 +10,11 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
-# Include sub-projects.
 add_subdirectory ("src")
 
 file(GLOB_RECURSE PROJECT_HEADERS CONFIGURE_DEPENDS include/*.h include/*.hpp)
 
-add_library (${PROJECT_TARGET} STATIC ${PROJECT_SOURCES} ${PROJECT_HEADERS} "NatvisFile.natvis")
+add_library (${PROJECT_TARGET} STATIC ${PROJECT_SOURCES} ${PROJECT_HEADERS})
 set_property(TARGET ${PROJECT_TARGET} PROPERTY C_STANDARD 99)
 set_source_files_properties("NatvisFile.natvis" PROPERTIES HEADER_FILE_ONLY true)
 
