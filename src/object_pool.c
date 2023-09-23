@@ -66,6 +66,32 @@ void* ketlGetNFreeObjectsFromPool(KETLObjectPool* pool, uint64_t count) {
 	return value;
 }
 
+void* ketlGetObjectFromPool(KETLObjectPool* pool, uint64_t index) {
+	KETLObjectPoolBase* baseIterator = pool->firstPool;
+	uint64_t poolSize = pool->poolSize;
+	while (index >= poolSize) {
+		index -= poolSize;
+		baseIterator = baseIterator->next;
+	}
+	return ((char*)(baseIterator + 1)) + pool->objectSize * index;
+}
+
+uint64_t ketlGetUsedCountFromPool(KETLObjectPool* pool) {
+	KETLObjectPoolBase* baseIterator = pool->firstPool;
+	KETLObjectPoolBase* lastPoolNext = pool->lastPool->next;
+	uint64_t poolSize = pool->poolSize;
+	uint64_t usedCount = 0;
+	KETL_FOREVER {
+		KETLObjectPoolBase* next = baseIterator->next;
+		if (next == lastPoolNext) {
+			break;
+		}
+		usedCount += poolSize;
+		baseIterator = next;
+	}
+	return usedCount + pool->occupiedObjects;
+}
+
 void ketlResetPool(KETLObjectPool* pool) {
 	pool->lastPool = pool->firstPool;
 	pool->occupiedObjects = 0;

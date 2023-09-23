@@ -31,6 +31,11 @@ void* ketlGetFreeObjectFromPool(KETLObjectPool* pool);
 
 void* ketlGetNFreeObjectsFromPool(KETLObjectPool* pool, uint64_t count);
 
+// should not intersect with ketlGetNFreeObjectsFromPool
+void* ketlGetObjectFromPool(KETLObjectPool* pool, uint64_t index);
+
+uint64_t ketlGetUsedCountFromPool(KETLObjectPool* pool);
+
 void ketlResetPool(KETLObjectPool* pool);
 
 void ketlInitPoolIterator(KETLObjectPoolIterator* iterator, KETLObjectPool* pool);

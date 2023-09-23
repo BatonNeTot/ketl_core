@@ -24,6 +24,10 @@ void* ketlIntMapGet(KETLIntMap* map, KETLIntMapKey key);
 
 bool ketlIntMapGetOrCreate(KETLIntMap* map, KETLIntMapKey key, void* ppValue);
 
+inline uint64_t ketlIntMapGetSize(KETLIntMap* map) {
+	return map->size;
+}
+
 void ketlIntMapReset(KETLIntMap* map);
 
 KETL_DEFINE(KETLIntMapIterator) {

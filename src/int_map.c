@@ -15,7 +15,7 @@ static const uint64_t primeCapacities[] =
   1610612741ULL, 3221225473ULL, 4294967291ULL
 };
 
-const uint64_t TOTAL_PRIME_CAPACITIES = sizeof(primeCapacities) / sizeof(primeCapacities[0]);
+static const uint64_t TOTAL_PRIME_CAPACITIES = sizeof(primeCapacities) / sizeof(primeCapacities[0]);
 
 struct KETLIntMapBucketBase {
 	KETLIntMapKey key;
