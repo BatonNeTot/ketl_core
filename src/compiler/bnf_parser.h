@@ -25,6 +25,6 @@ KETL_DEFINE(KETLBnfErrorInfo) {
 	KETLBnfNode* bnfNode;
 };
 
-bool ketlParseBnf(KETLStack* syntaxStateStack, KETLBnfErrorInfo* error);
+bool ketlParseBnf(KETLStack* bnfStateStack, KETLBnfErrorInfo* error);
 
 #endif /*compiler_bnf_parser_h*/
