@@ -154,6 +154,9 @@ static bool isStrEqual(const char* bucketKey, const char* key, uint64_t length) 
 static const char* const emptyString = "";
 
 const char* ketlAtomicStringsGet(KETLAtomicStrings* map, const char* key, uint64_t length) {
+	if (key == NULL) {
+		return NULL;
+	}
 	if (length == 0 || *key == '\0') {
 		return emptyString;
 	}
