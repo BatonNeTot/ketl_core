@@ -33,7 +33,16 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 	ketlInitLexer(&lexer, source, length, tokenPool);
 
 	if (!ketlHasNextToken(&lexer)) {
-		return NULL;
+		KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
+
+		node->type = KETL_SYNTAX_NODE_TYPE_BLOCK;
+		node->positionInSource = 0;
+		node->value = 0;
+		node->firstChild = NULL;
+		node->nextSibling = NULL;
+		node->length = 0;
+
+		return node;
 	}
 	KETLToken* firstToken = ketlGetNextToken(&lexer);
 	KETLToken* token = firstToken;
@@ -61,6 +70,7 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 
 	bool success = ketlParseBnf(bnfStateStack, &error);
 	if (!success) {
+		// TODO log error
 		return NULL;
 	}
 

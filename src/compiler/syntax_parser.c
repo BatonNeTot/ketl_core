@@ -335,8 +335,6 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 
 		KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
 
-		// TODO insert jump instruction
-
 		ketlIteratorStackSkipNext(bnfStackIterator); // )
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
 
