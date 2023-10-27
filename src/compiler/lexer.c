@@ -67,7 +67,7 @@ static inline bool isSecondSymbolMultiLineCommentEnd(char value) {
 }
 
 static inline bool isNextLineSymbol(char value) {
-	return value = '\n';
+	return value == '\n';
 }
 
 
@@ -76,12 +76,12 @@ static inline void iterate(KETLLexer* lexer) {
 }
 
 static inline char getChar(const KETLLexer* lexer) {
-	return lexer->sourceIt < lexer->sourceEnd ? *(lexer->sourceIt) : 0;
+	return lexer->sourceIt < lexer->sourceEnd ? *(lexer->sourceIt) : '\0';
 }
 
 static inline char getNextChar(const KETLLexer* lexer) {
 	const char* pNext = lexer->sourceIt + 1;
-	return pNext < lexer->sourceEnd ? *(pNext) : 0;
+	return pNext < lexer->sourceEnd ? *(pNext) : '\0';
 }
 
 static inline char getCharAndIterate(KETLLexer* lexer) {
@@ -105,8 +105,9 @@ static inline void skipSingleLineComment(KETLLexer* lexer) {
 			return;
 		}
 
+		iterate(lexer);
+
 		if (isNextLineSymbol(current)) {
-			iterate(lexer);
 			return;
 		}
 	}
