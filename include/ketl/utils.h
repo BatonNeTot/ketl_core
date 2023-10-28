@@ -20,7 +20,7 @@ typedef struct name name
 // This code is supposed to be unreachable, so assert
 #define KETL_NODEFAULT() default: //assert(0) TODO assert
 #else
-#define KETL_NODEFAULT() default: __assume(0)
+#define KETL_NODEFAULT() default: __assume(0);
 #endif
 
 #define KETL_NULL_TERMINATED_LENGTH SIZE_MAX
