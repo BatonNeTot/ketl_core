@@ -8,8 +8,6 @@
 #include "ketl/stack.h"
 #include "ketl/object_pool.h"
 
-#include <debugapi.h>
-
 static KETLSyntaxNodeType decideOperatorSyntaxType(const char* value, uint32_t length) {
 	switch (length) {
 	case 1: {
@@ -37,7 +35,7 @@ static KETLSyntaxNodeType decideOperatorSyntaxType(const char* value, uint32_t l
 		break;
 	}
 	}
-	__debugbreak();
+	KETL_DEBUGBREAK();
 	return 0;
 }
 
@@ -129,9 +127,9 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 				return node;
 			}
 		default:
-			__debugbreak();
+			KETL_DEBUGBREAK();
 		}
-		__debugbreak();
+		KETL_DEBUGBREAK();
 		break;
 	}
 	case KETL_SYNTAX_BUILDER_TYPE_TYPE:
@@ -146,7 +144,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 
 			return node;
 		}
-		__debugbreak();
+		KETL_DEBUGBREAK();
 		break;
 	case KETL_SYNTAX_BUILDER_TYPE_PRIMARY_EXPRESSION:
 		state = ketlIteratorStackGetNext(bnfStackIterator);
@@ -172,9 +170,9 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			return node;
 		}
 		default:
-			__debugbreak();
+			KETL_DEBUGBREAK();
 		}
-		__debugbreak();
+		KETL_DEBUGBREAK();
 		break;
 	case KETL_SYNTAX_BUILDER_TYPE_PRECEDENCE_EXPRESSION_1: {
 		// LEFT TO RIGHT
@@ -184,7 +182,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		KETL_ITERATOR_STACK_PEEK(KETLBnfParserState*, next, *bnfStackIterator);
 
 		if (next->parent == state) {
-			__debugbreak();
+			KETL_DEBUGBREAK();
 		}
 
 		return left;
@@ -197,7 +195,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		KETL_ITERATOR_STACK_PEEK(KETLBnfParserState*, next, *bnfStackIterator);
 
 		if (next->parent == state) {
-			__debugbreak();
+			KETL_DEBUGBREAK();
 		}
 
 		return caller;
@@ -397,7 +395,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 	}
 	case KETL_SYNTAX_BUILDER_TYPE_NONE:
 	default:
-		__debugbreak();
+		KETL_DEBUGBREAK();
 	}
 
 	return NULL;

@@ -5,12 +5,12 @@
 #include <string.h>
 
 // TODO make m's and p's bigger
-const static uint32_t m1 = 1000000007;
-const static uint32_t m2 = 1000000009;
+static const uint32_t m1 = 1000000007;
+static const uint32_t m2 = 1000000009;
 
 #define MAX_STRING_LENGTH 100
 
-const static uint64_t powP1[MAX_STRING_LENGTH] = {
+static const uint64_t powP1[MAX_STRING_LENGTH] = {
 	1ULL, 31ULL, 961ULL, 29791ULL, 923521ULL, 28629151ULL, 
 	887503681ULL, 512613922ULL, 891031477ULL, 621975598ULL, 
 	281243405ULL, 718545499ULL, 274910315ULL, 522219709ULL, 
@@ -37,7 +37,7 @@ const static uint64_t powP1[MAX_STRING_LENGTH] = {
 	451875419ULL, 8137891ULL, 252274621ULL, 820513202ULL, 
 	435909087ULL, 513181606ULL
 };
-const static uint64_t powP2[MAX_STRING_LENGTH] = {
+static const uint64_t powP2[MAX_STRING_LENGTH] = {
 	1ULL, 37ULL, 1369ULL, 50653ULL, 1874161ULL, 69343957ULL, 
 	565726391ULL, 931876287ULL, 479422313ULL, 738625428ULL, 
 	329140593ULL, 178201833ULL, 593467767ULL, 958307190ULL, 
@@ -105,7 +105,7 @@ static const uint64_t primeCapacities[] =
 
 static const uint64_t TOTAL_PRIME_CAPACITIES = sizeof(primeCapacities) / sizeof(primeCapacities[0]);
 
-struct KETLAtomicStringsBucket {
+KETL_DEFINE(KETLAtomicStringsBucket) {
 	const char* key;
 	uint64_t hash;
 	KETLAtomicStringsBucket* next;
@@ -181,7 +181,12 @@ const char* ketlAtomicStringsGet(KETLAtomicStrings* map, const char* key, uint64
 
 	uint64_t size = ++map->size;
 	if (size > capacity) {
-		uint64_t newCapacity = primeCapacities[++map->capacityIndex];
+		uint64_t newCapacityIndex = map->capacityIndex + 1;
+		if (TOTAL_PRIME_CAPACITIES <= newCapacityIndex) {
+			// TODO error
+			return NULL;
+		}
+		uint64_t newCapacity = primeCapacities[map->capacityIndex = newCapacityIndex];
 		uint64_t arraySize = sizeof(KETLAtomicStringsBucket*) * newCapacity;
 		KETLAtomicStringsBucket** newBuckets = map->buckets = malloc(arraySize);
 		// TODO use custom memset

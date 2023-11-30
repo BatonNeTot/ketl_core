@@ -87,6 +87,10 @@ static inline bool iterate(KETLBnfParserState* solverState, KETLToken** pToken, 
 			uint32_t tokenLength = currentToken->length;
 			uint32_t nodeLength = solverState->bnfNode->size;
 
+			if (tokenLength != nodeLength) {
+				return false;
+			}
+
 			if (!iterateIterator(pToken, pTokenOffset, solverState->bnfNode->value, nodeLength)) {
 				return false;
 			}
@@ -179,7 +183,7 @@ static inline bool childRejected(KETLBnfParserState* solverState) {
 	}
 }
 
-
+#if KETL_OS_WINDOWS
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -277,12 +281,18 @@ static void printBnfSolution(KETLStackIterator* iterator) {
 }
 
 static inline void drawStack(KETLStack* bnfStateStack) {
-	/*
 	KETLStackIterator iterator;
 	ketlInitStackIterator(&iterator, bnfStateStack);
 	printBnfSolution(&iterator);
-	*/
 }
+
+#else
+
+static inline void drawStack(KETLStack* bnfStateStack) {
+	(void)bnfStateStack;
+}
+
+#endif
 
 bool ketlParseBnf(KETLStack* bnfStateStack, KETLBnfErrorInfo* error) {
 	drawStack(bnfStateStack);

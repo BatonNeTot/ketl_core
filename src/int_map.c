@@ -17,7 +17,7 @@ static const uint64_t primeCapacities[] =
 
 static const uint64_t TOTAL_PRIME_CAPACITIES = sizeof(primeCapacities) / sizeof(primeCapacities[0]);
 
-struct KETLIntMapBucketBase {
+KETL_DEFINE(KETLIntMapBucketBase) {
 	KETLIntMapKey key;
 	KETLIntMapBucketBase* next;
 };
@@ -39,6 +39,8 @@ void ketlDeinitIntMap(KETLIntMap* map) {
 	ketlDeinitObjectPool(&map->bucketPool);
 	free(map->buckets);
 }
+
+uint64_t ketlIntMapGetSize(KETLIntMap* map);
 
 void* ketlIntMapGet(KETLIntMap* map, KETLIntMapKey key) {
 	uint64_t capacity = primeCapacities[map->capacityIndex];
@@ -73,7 +75,12 @@ bool ketlIntMapGetOrCreate(KETLIntMap* map, KETLIntMapKey key, void* ppValue) {
 
 	uint64_t size = ++map->size;
 	if (size > capacity) {
-		uint64_t newCapacity = primeCapacities[++map->capacityIndex];
+		uint64_t newCapacityIndex = map->capacityIndex + 1;
+		if (TOTAL_PRIME_CAPACITIES <= newCapacityIndex) {
+			// TODO error
+			return false;
+		}
+		uint64_t newCapacity = primeCapacities[map->capacityIndex = newCapacityIndex];
 		uint64_t arraySize = sizeof(KETLIntMapBucketBase*) * newCapacity;
 		KETLIntMapBucketBase** newBuckets = map->buckets = malloc(arraySize);
 		// TODO use custom memset

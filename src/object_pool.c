@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-struct KETLObjectPoolBase {
+KETL_DEFINE(KETLObjectPoolBase) {
 	KETLObjectPoolBase* next;
 };
 

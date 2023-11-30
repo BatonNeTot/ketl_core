@@ -17,7 +17,7 @@ static const uint64_t primeCapacities[] =
 
 static const uint64_t TOTAL_PRIME_CAPACITIES = sizeof(primeCapacities) / sizeof(primeCapacities[0]);
 
-struct KETLIntSetBucketBase {
+KETL_DEFINE(KETLIntSetBucketBase) {
 	KETLIntSetElement element;
 	KETLIntSetBucketBase* next;
 };
@@ -56,7 +56,12 @@ void ketlIntSetPut(KETLIntSet* set, KETLIntSetElement element) {
 
 	uint64_t size = ++set->size;
 	if (size > capacity) {
-		uint64_t newCapacity = primeCapacities[++set->capacityIndex];
+		uint64_t newCapacityIndex = set->capacityIndex + 1;
+		if (TOTAL_PRIME_CAPACITIES <= newCapacityIndex) {
+			// TODO error
+			return;
+		}
+		uint64_t newCapacity = primeCapacities[set->capacityIndex = newCapacityIndex];
 		uint64_t arraySize = sizeof(KETLIntSetBucketBase*) * newCapacity;
 		KETLIntSetBucketBase** newBuckets = set->buckets = malloc(arraySize);
 		// TODO use custom memset

@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-struct KETLStackPoolBase {
+KETL_DEFINE(KETLStackPoolBase) {
 	KETLStackPoolBase* next;
 	KETLStackPoolBase* prev;
 };
