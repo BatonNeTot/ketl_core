@@ -11,6 +11,7 @@
 #include "bnf_scheme.h"
 #include "ketl/object_pool.h"
 #include "ketl/stack.h"
+#include "ketl/assert.h"
 
 void ketlInitSyntaxSolver(KETLSyntaxSolver* syntaxSolver) {
 	ketlInitObjectPool(&syntaxSolver->tokenPool, sizeof(KETLToken), 16);
@@ -69,8 +70,8 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 	}
 
 	bool success = ketlParseBnf(bnfStateStack, &error);
-	if (!success) {
-		// TODO log error
+	if (KETL_CHECK_VOEM(success, "Failed to parse source", 0)) {
+		// TODO proper log error
 		return NULL;
 	}
 

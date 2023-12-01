@@ -12,11 +12,11 @@
 
 #define KETL_CHECK_LEXER_MESSAGE "Lexer is null"
 
-#define KETL_CHECK_LEXER if (KETL_CHECK_VOEM(lexer, KETL_CHECK_LEXER_MESSAGE)) {\
+#define KETL_CHECK_LEXER if (KETL_CHECK_VOEM(lexer, KETL_CHECK_LEXER_MESSAGE, 0)) {\
 	return;\
 }
 
-#define KETL_CHECK_LEXER_VALUE(x) if (KETL_CHECK_VOEM(lexer, KETL_CHECK_LEXER_MESSAGE)) {\
+#define KETL_CHECK_LEXER_VALUE(x) if (KETL_CHECK_VOEM(lexer, KETL_CHECK_LEXER_MESSAGE, 0)) {\
 	return (x);\
 }
 
@@ -167,13 +167,13 @@ static inline void skipSpaceAndComments(KETLLexer* lexer) {
 
 static KETLToken* createToken(const KETLLexer* lexer, const char* startIt, KETLTokenType type) {
 	KETLToken* token = ketlGetFreeObjectFromPool(lexer->tokenPool);
-	if (KETL_CHECK_VOEM(token, "Can't allocate space for token")) {
+	if (KETL_CHECK_VOEM(token, "Can't allocate space for token", 0)) {
 		return NULL;
 	}
 
 	ptrdiff_t length = lexer->sourceIt - startIt;
 
-	if (KETL_CHECK_VOEM(length <= UINT16_MAX, "Token length is bigger then "KETL_STR_VALUE(UINT16_MAX))) {
+	if (KETL_CHECK_VOEM(length <= UINT16_MAX, "Token length is bigger then "KETL_STR_VALUE(UINT16_MAX), 0)) {
 		return NULL;
 	}
 
@@ -296,7 +296,7 @@ KETLToken* ketlGetNextToken(KETLLexer* lexer) {
 			startIt = lexer->sourceIt;
 			KETL_FOREVER {
 				char current = getChar(lexer);
-				if (KETL_CHECK_VOEM(current != '\0', "Unexpected EOF")) {
+				if (KETL_CHECK_VOEM(current != '\0', "Unexpected EOF", 0)) {
 					return NULL;
 				}
 				if (isStringQuote(current)) {
