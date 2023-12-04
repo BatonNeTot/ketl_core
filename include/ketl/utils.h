@@ -61,19 +61,22 @@
     #include <debugapi.h>
     #define KETL_DEBUGBREAK() __debugbreak()
 #else
-    #define KETL_DEBUGBREAK() __builtin_trap()
+    #define KETL_DEBUGBREAK() __asm__ volatile("int $0x03")
 #endif
 
-#define KETL_STR_VALUE_IMPL(x) #x
-#define KETL_STR_VALUE(x) KETL_STR_VALUE_IMPL(x)
+#define __KETL_STR_VALUE(x) #x
+#define KETL_STR_VALUE(x) __KETL_STR_VALUE(x)
+
+#define __KETL_CONCAT(a, b) a ## b
+#define KETL_CONCAT(a, b) __KETL_CONCAT(a, b)
 
 #define KETL_FOREVER while(1)
 
 #define KETL_STRUCT_PREFIX _ketl_struct_
 
-#define KETL_FORWARD(name) typedef struct KETL_STRUCT_PREFIX##name name
+#define KETL_FORWARD(name) typedef struct KETL_CONCAT(KETL_STRUCT_PREFIX, name) name
 
-#define KETL_DEFINE(name) KETL_FORWARD(name); struct KETL_STRUCT_PREFIX##name
+#define KETL_DEFINE(name) KETL_FORWARD(name); struct KETL_CONCAT(KETL_STRUCT_PREFIX, name)
 
 #ifdef NDEBUG
     #define KETL_NODEFAULT() default: __assume(0);

@@ -306,9 +306,9 @@ bool ketlParseBnf(KETLStack* bnfStateStack, KETLBnfErrorInfo* error) {
 			if (error->maxToken == currentToken && error->maxTokenOffset == currentTokenOffset) {
 				error->bnfNode = current->bnfNode;
 			}
-			else if (error->maxToken == NULL || currentToken == NULL ||
+			else if (error->maxToken != NULL && (currentToken == NULL ||
 				error->maxToken->positionInSource + error->maxTokenOffset
-				< currentToken->positionInSource + currentTokenOffset) {
+				< currentToken->positionInSource + currentTokenOffset)) {
 				error->maxToken = currentToken;
 				error->maxTokenOffset = currentTokenOffset;
 				error->bnfNode = current->bnfNode;

@@ -8,7 +8,10 @@ uint64_t ketl_logv(ketl_log_level_t level, const char* message, va_list args) {
     if (level < ketl_log_level) {
         return 0;
     }
-    uint64_t result = vfprintf(level >= KETL_LOG_ERROR ? stderr : stdout, message, args);
+    FILE* outfile = level >= KETL_LOG_ERROR ? stderr : stdout;
+    uint64_t result = vfprintf(outfile, message, args);
+    // TODO check if message ends with a '\n' and print additional '\n' only if nessesary 
+    result += printf("\n");
     if (level >= KETL_LOG_BREAK_LEVEL) {
         KETL_DEBUGBREAK();
     }

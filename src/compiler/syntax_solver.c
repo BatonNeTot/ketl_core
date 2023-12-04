@@ -64,14 +64,40 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 
 	KETLBnfErrorInfo error;
 	{
-		error.maxToken = NULL;
+		error.maxToken = firstToken;
 		error.maxTokenOffset = 0;
 		error.bnfNode = NULL;
 	}
 
 	bool success = ketlParseBnf(bnfStateStack, &error);
-	if (KETL_CHECK_VOEM(success, "Failed to parse source", 0)) {
-		// TODO proper log error
+	if (!success) {
+		uint64_t line;
+		uint64_t column;
+		const char* result;
+		uint64_t resultLength;
+		if (error.maxToken) {
+			// has "find instead"
+			// TODO calculate line and column
+			line = 10;
+			column = 5;
+			result = error.maxToken->value + error.maxTokenOffset;
+			resultLength = error.maxToken->length;
+		} else {
+			// unexpected EOF
+			// TODO calculate line and column of end
+			line = 10;
+			column = 5;
+			result = "EOF";
+			resultLength = 3;
+		}
+		if (error.bnfNode) {
+			KETL_ERROR("Expected '%.*s' at '%llu:%llu', got '%.*s'", 
+				error.bnfNode->size, error.bnfNode->value, 
+				line, column,
+				resultLength, result);
+		} else {
+			KETL_ERROR("unknown error", 0);
+		}
 		return NULL;
 	}
 

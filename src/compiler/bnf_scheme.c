@@ -453,9 +453,6 @@ KETLBnfNode* ketlBuildBnfScheme(KETLObjectPool* bnfNodePool) {
 		currentChild->ref = NULL; // TODO whileElse
 		*/
 
-		CREATE_SIBLING();
-		SET_REF(returnNode);
-
 		/*
 		CREATE_SIBLING(currentChild);
 		currentChild->type = KETL_BNF_NODE_TYPE_REF;
@@ -474,6 +471,9 @@ KETLBnfNode* ketlBuildBnfScheme(KETLObjectPool* bnfNodePool) {
 		currentChild->type = KETL_BNF_NODE_TYPE_REF;
 		currentChild->ref = NULL; // TODO defineStruct
 		*/
+
+		CREATE_SIBLING();
+		SET_REF(returnNode);
 
 		CREATE_SIBLING();
 		SET_TYPE(KETL_BNF_NODE_TYPE_CONCAT);
