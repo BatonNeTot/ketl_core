@@ -21,6 +21,8 @@
 }
 
 
+size_t ketl_lexer_current_position(KETLLexer* lexer);
+
 static inline bool isSpace(char value) {
 	return value == ' '
 		|| (value >= '\t' && value <= '\r');
@@ -75,18 +77,26 @@ static inline void iterate(KETLLexer* lexer) {
 	++lexer->sourceIt;
 }
 
+static inline bool hasNextCharAfter(const KETLLexer* lexer, const char* sourceIt) {
+	const char* sourceEnd = lexer->sourceEnd;
+	return sourceEnd == NULL ? *sourceIt != '\0' : sourceIt < sourceEnd;
+}
+
+static inline bool hasNextChar(const KETLLexer* lexer) {
+	return hasNextCharAfter(lexer, lexer->sourceIt);
+}
+
 static inline char getChar(const KETLLexer* lexer) {
-	return lexer->sourceIt < lexer->sourceEnd ? *(lexer->sourceIt) : '\0';
+	return hasNextChar(lexer) ? *(lexer->sourceIt) : '\0';
 }
 
 static inline char getNextChar(const KETLLexer* lexer) {
 	const char* pNext = lexer->sourceIt + 1;
-	return pNext < lexer->sourceEnd ? *(pNext) : '\0';
+	return hasNextCharAfter(lexer, pNext) ? *(pNext) : '\0';
 }
 
 static inline char getCharAndIterate(KETLLexer* lexer) {
-	if (lexer->sourceIt >= lexer->sourceEnd) {
-		lexer->sourceIt = lexer->sourceEnd;
+	if (!hasNextChar(lexer)) {
 		return '\0';
 	}
 
@@ -196,14 +206,10 @@ static inline KETLToken* createTokenAndSkip(KETLLexer* lexer, const char* startI
 	return token;
 }
 
-static inline bool hasNextChar(const KETLLexer* lexer) {
-	return lexer->sourceIt < lexer->sourceEnd && *lexer->sourceIt != '\0';
-}
-
 void ketlInitLexer(KETLLexer* lexer, const char* source, size_t length, KETLObjectPool* tokenPool) {
 	lexer->source = source;
 	lexer->sourceIt = source;
-	lexer->sourceEnd = length >= KETL_NULL_TERMINATED_LENGTH ? (void*)(-1) : source + length;
+	lexer->sourceEnd = length >= KETL_NULL_TERMINATED_LENGTH ? NULL : source + length;
 	lexer->tokenPool = tokenPool;
 
 	skipSpaceAndComments(lexer);

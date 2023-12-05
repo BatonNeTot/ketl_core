@@ -8,6 +8,8 @@ KETL_FORWARD(KETLObjectPool);
 KETL_FORWARD(KETLStackIterator);
 KETL_FORWARD(KETLSyntaxNode);
 
-KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterator* bnfStackIterator);
+void ketl_count_lines(const char* source, uint64_t length, uint32_t* pLine, uint32_t* pColumn);
+
+KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterator* bnfStackIterator, const char* source);
 
 #endif /*compiler_syntax_parser_h*/

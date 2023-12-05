@@ -13,6 +13,8 @@
 #include "ketl/stack.h"
 #include "ketl/assert.h"
 
+#include <string.h>
+
 void ketlInitSyntaxSolver(KETLSyntaxSolver* syntaxSolver) {
 	ketlInitObjectPool(&syntaxSolver->tokenPool, sizeof(KETLToken), 16);
 	ketlInitObjectPool(&syntaxSolver->bnfNodePool, sizeof(KETLBnfNode), 16);
@@ -37,7 +39,8 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 		KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 		node->type = KETL_SYNTAX_NODE_TYPE_BLOCK;
-		node->positionInSource = 0;
+		node->lineInSource = 0;
+		node->columnInSource = 0;
 		node->value = 0;
 		node->firstChild = NULL;
 		node->nextSibling = NULL;
@@ -52,6 +55,8 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 		token = token->next = ketlGetNextToken(&lexer);
 	}
 	token->next = NULL;
+
+	size_t sourceLength = ketl_lexer_current_position(&lexer);
 
 	{
 		KETLBnfParserState* initialSolver = ketlPushOnStack(bnfStateStack);
@@ -71,32 +76,33 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 
 	bool success = ketlParseBnf(bnfStateStack, &error);
 	if (!success) {
-		uint64_t line;
-		uint64_t column;
+		uint64_t tokenPositionInSource;
 		const char* result;
 		uint64_t resultLength;
 		if (error.maxToken) {
 			// has "find instead"
-			// TODO calculate line and column
-			line = 10;
-			column = 5;
+			tokenPositionInSource = error.maxToken->positionInSource + error.maxTokenOffset;
 			result = error.maxToken->value + error.maxTokenOffset;
 			resultLength = error.maxToken->length;
 		} else {
 			// unexpected EOF
 			// TODO calculate line and column of end
-			line = 10;
-			column = 5;
+			tokenPositionInSource = length != KETL_NULL_TERMINATED_LENGTH ? length : sourceLength;
 			result = "EOF";
 			resultLength = 3;
 		}
+
+		uint32_t line = 0;
+		uint32_t column = 0;
+		ketl_count_lines(source, tokenPositionInSource, &line, &column);
+
 		if (error.bnfNode) {
-			KETL_ERROR("Expected '%.*s' at '%llu:%llu', got '%.*s'", 
+			KETL_ERROR("Expected '%.*s' at '%u:%u', got '%.*s'", 
 				error.bnfNode->size, error.bnfNode->value, 
 				line, column,
 				resultLength, result);
 		} else {
-			KETL_ERROR("unknown error", 0);
+			KETL_ERROR("Can't parse bnf", 0);
 		}
 		return NULL;
 	}
@@ -104,7 +110,7 @@ KETLSyntaxNode* ketlSolveSyntax(const char* source, size_t length, KETLSyntaxSol
 	KETLStackIterator iterator;
 	ketlInitStackIterator(&iterator, bnfStateStack);
 
-	KETLSyntaxNode* rootSyntaxNode = ketlParseSyntax(syntaxNodePool, &iterator);
+	KETLSyntaxNode* rootSyntaxNode = ketlParseSyntax(syntaxNodePool, &iterator, source);
 
 	ketlResetStack(bnfStateStack);
 	ketlResetPool(tokenPool);

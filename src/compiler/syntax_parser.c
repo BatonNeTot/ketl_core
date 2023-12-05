@@ -8,6 +8,23 @@
 #include "ketl/stack.h"
 #include "ketl/object_pool.h"
 
+void ketl_count_lines(const char* source, uint64_t length, uint32_t* pLine, uint32_t* pColumn) {
+	uint64_t line = 0;
+	uint64_t column = 0;
+
+	for (uint64_t i = 0u; i < length; ++i) {
+		if (source[i] == '\n') {
+			++line;
+			column = 0;
+		} else {
+			++column;
+		}
+	}
+
+	*pLine = line;
+	*pColumn = column;
+}
+
 static KETLSyntaxNodeType decideOperatorSyntaxType(const char* value, uint32_t length) {
 	switch (length) {
 	case 1: {
@@ -50,7 +67,7 @@ static uint32_t calculateNodeLength(KETLSyntaxNode* node) {
 	return length;
 }
 
-KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterator* bnfStackIterator) {
+KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterator* bnfStackIterator, const char* source) {
 	KETLBnfParserState* state = ketlIteratorStackGetNext(bnfStackIterator);
 
 	switch (state->bnfNode->builder) {
@@ -70,7 +87,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			}
 
 			ketlIteratorStackSkipNext(bnfStackIterator); // ref
-			KETLSyntaxNode* command = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			KETLSyntaxNode* command = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 
 			if (command == NULL) {
 				continue;
@@ -95,7 +112,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		state = ketlIteratorStackGetNext(bnfStackIterator);
 		switch (state->bnfNode->type) {
 		case KETL_BNF_NODE_TYPE_REF:
-			return ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			return ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		case KETL_BNF_NODE_TYPE_CONCAT:
 			state = ketlIteratorStackGetNext(bnfStackIterator); // '{' or optional
 			if (state->bnfNode->type == KETL_BNF_NODE_TYPE_OPTIONAL) {
@@ -105,7 +122,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 				KETLSyntaxNode* node = NULL;
 				if (next->parent == state) {
 					ketlIteratorStackSkipNext(bnfStackIterator); // ref
-					node = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+					node = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 				}
 
 				ketlIteratorStackSkipNext(bnfStackIterator); // ;
@@ -117,9 +134,10 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 				KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 				node->type = KETL_SYNTAX_NODE_TYPE_BLOCK;
-				node->positionInSource = state->token->positionInSource + state->tokenOffset;
+				ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+					&node->lineInSource, &node->columnInSource);
 				node->value = state->token->value + state->tokenOffset;
-				node->firstChild = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+				node->firstChild = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 				node->length = calculateNodeLength(node->firstChild);
 
 				ketlIteratorStackSkipNext(bnfStackIterator); // }
@@ -138,7 +156,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 			node->type = KETL_SYNTAX_NODE_TYPE_ID;
-			node->positionInSource = state->token->positionInSource + state->tokenOffset;
+			ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+				&node->lineInSource, &node->columnInSource);
 			node->value = state->token->value + state->tokenOffset;
 			node->length = state->token->length - state->tokenOffset;
 
@@ -153,7 +172,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 			node->type = KETL_SYNTAX_NODE_TYPE_ID;
-			node->positionInSource = state->token->positionInSource + state->tokenOffset;
+			ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+				&node->lineInSource, &node->columnInSource);
 			node->value = state->token->value + state->tokenOffset;
 			node->length = state->token->length - state->tokenOffset;
 
@@ -163,21 +183,28 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 			node->type = KETL_SYNTAX_NODE_TYPE_NUMBER;
-			node->positionInSource = state->token->positionInSource + state->tokenOffset;
+			ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+				&node->lineInSource, &node->columnInSource);
 			node->value = state->token->value + state->tokenOffset;
 			node->length = state->token->length - state->tokenOffset;
 
 			return node;
 		}
+		case KETL_BNF_NODE_TYPE_CONCAT: {
+			ketlIteratorStackSkipNext(bnfStackIterator); // (
+			ketlIteratorStackSkipNext(bnfStackIterator); // ref
+			KETLSyntaxNode* node = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
+			ketlIteratorStackSkipNext(bnfStackIterator); // )
+			return node;
+		}
 		default:
 			KETL_DEBUGBREAK();
 		}
-		KETL_DEBUGBREAK();
 		break;
 	case KETL_SYNTAX_BUILDER_TYPE_PRECEDENCE_EXPRESSION_1: {
 		// LEFT TO RIGHT
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
-		KETLSyntaxNode* left = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* left = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		KETLBnfParserState* state = ketlIteratorStackGetNext(bnfStackIterator); // repeat
 		KETL_ITERATOR_STACK_PEEK(KETLBnfParserState*, next, *bnfStackIterator);
 
@@ -190,7 +217,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 	case KETL_SYNTAX_BUILDER_TYPE_PRECEDENCE_EXPRESSION_2: {
 		// LEFT TO RIGHT
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
-		KETLSyntaxNode* caller = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* caller = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		KETLBnfParserState* state = ketlIteratorStackGetNext(bnfStackIterator); // repeat
 		KETL_ITERATOR_STACK_PEEK(KETLBnfParserState*, next, *bnfStackIterator);
 
@@ -204,7 +231,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 	case KETL_SYNTAX_BUILDER_TYPE_PRECEDENCE_EXPRESSION_4: {
 		// LEFT TO RIGHT
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
-		KETLSyntaxNode* left = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* left = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 
 		KETLBnfParserState* repeat = ketlIteratorStackGetNext(bnfStackIterator); // repeat
 		KETL_FOREVER {
@@ -222,12 +249,13 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 			node->type = decideOperatorSyntaxType(op->token->value + op->tokenOffset, op->token->length - op->tokenOffset);
-			node->positionInSource = op->token->positionInSource + op->tokenOffset;
+			ketl_count_lines(source, op->token->positionInSource + op->tokenOffset, 
+				&node->lineInSource, &node->columnInSource);
 			node->length = 2;
 			node->firstChild = left;
 
 			ketlIteratorStackSkipNext(bnfStackIterator); // ref
-			KETLSyntaxNode* right = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			KETLSyntaxNode* right = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 
 			left->nextSibling = right;
 			right->nextSibling = NULL;
@@ -239,7 +267,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 	case KETL_SYNTAX_BUILDER_TYPE_PRECEDENCE_EXPRESSION_6: {
 		// RIGHT TO LEFT
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
-		KETLSyntaxNode* root = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* root = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		KETLSyntaxNode* left = NULL;
 
 		KETLBnfParserState* repeat = ketlIteratorStackGetNext(bnfStackIterator); // repeat
@@ -258,7 +286,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 			node->type = decideOperatorSyntaxType(op->token->value + op->tokenOffset, op->token->length - op->tokenOffset);
-			node->positionInSource = op->token->positionInSource + op->tokenOffset;
+			ketl_count_lines(source, op->token->positionInSource + op->tokenOffset, 
+				&node->lineInSource, &node->columnInSource);
 			node->length = 2;
 			if (left != NULL) {
 				node->firstChild = left->nextSibling;
@@ -272,7 +301,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			}
 
 			ketlIteratorStackSkipNext(bnfStackIterator); // ref
-			KETLSyntaxNode* right = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			KETLSyntaxNode* right = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 
 			left->nextSibling = right;
 			right->nextSibling = NULL;
@@ -283,7 +312,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 
 		ketlIteratorStackSkipNext(bnfStackIterator); // or
 		state = ketlIteratorStackGetNext(bnfStackIterator); // var or type
-		node->positionInSource = state->token->positionInSource + state->tokenOffset;
+		ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+			&node->lineInSource, &node->columnInSource);
 
 		KETLSyntaxNode* typeNode = NULL;
 
@@ -293,7 +323,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		}
 		else {
 			node->length = 3;
-			typeNode = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			typeNode = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 			node->firstChild = typeNode;
 			node->type = KETL_SYNTAX_NODE_TYPE_DEFINE_VAR_OF_TYPE;
 		}
@@ -304,7 +334,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		KETLSyntaxNode* idNode = ketlGetFreeObjectFromPool(syntaxNodePool);
 
 		idNode->type = KETL_SYNTAX_NODE_TYPE_ID;
-		idNode->positionInSource = state->token->positionInSource + state->tokenOffset;
+		ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+			&idNode->lineInSource, &idNode->columnInSource);
 		idNode->length = state->token->length - state->tokenOffset;
 		idNode->value = state->token->value + state->tokenOffset;
 
@@ -318,7 +349,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		ketlIteratorStackSkipNext(bnfStackIterator); // :=
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
 
-		KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		expression->nextSibling = NULL;
 
 		idNode->nextSibling = expression;
@@ -331,12 +362,12 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		ketlIteratorStackSkipNext(bnfStackIterator); // (
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
 
-		KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 
 		ketlIteratorStackSkipNext(bnfStackIterator); // )
 		ketlIteratorStackSkipNext(bnfStackIterator); // ref
 
-		KETLSyntaxNode* trueBlock = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+		KETLSyntaxNode* trueBlock = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 		KETLSyntaxNode* falseBlock = NULL;
 
 		KETLBnfParserState* optional = ketlIteratorStackGetNext(bnfStackIterator);
@@ -347,7 +378,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 			*bnfStackIterator = tmpIterator;
 			ketlIteratorStackSkipNext(bnfStackIterator); // else
 			ketlIteratorStackSkipNext(bnfStackIterator); // ref
-			falseBlock = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			falseBlock = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 			falseBlock->nextSibling = NULL;
 		}
 		
@@ -358,7 +389,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		trueBlock->nextSibling = falseBlock;
 
 		node->type = KETL_SYNTAX_NODE_TYPE_IF_ELSE;
-		node->positionInSource = state->token->positionInSource + state->tokenOffset;
+		ketl_count_lines(source, state->token->positionInSource + state->tokenOffset, 
+			&node->lineInSource, &node->columnInSource);
 
 		node->length = 2;
 		if (falseBlock != NULL) {
@@ -376,7 +408,7 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		KETLSyntaxNode* node = ketlGetFreeObjectFromPool(syntaxNodePool);
 		if (next->parent == optional) {
 			ketlIteratorStackSkipNext(bnfStackIterator); // ref
-			KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator);
+			KETLSyntaxNode* expression = ketlParseSyntax(syntaxNodePool, bnfStackIterator, source);
 			expression->nextSibling = NULL;
 			node->firstChild = expression;
 			node->length = 1;
@@ -387,7 +419,8 @@ KETLSyntaxNode* ketlParseSyntax(KETLObjectPool* syntaxNodePool, KETLStackIterato
 		}
 
 		node->type = KETL_SYNTAX_NODE_TYPE_RETURN;
-		node->positionInSource = returnState->token->positionInSource + returnState->tokenOffset;
+		ketl_count_lines(source, returnState->token->positionInSource + returnState->tokenOffset, 
+			&node->lineInSource, &node->columnInSource);
 
 		ketlIteratorStackSkipNext(bnfStackIterator); // ;
 

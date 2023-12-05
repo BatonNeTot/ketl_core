@@ -31,7 +31,8 @@ typedef uint8_t KETLSyntaxNodeType;
 #define KETL_SYNTAX_NODE_TYPE_OPERATOR_BI_ASSIGN (KETL_OPERATOR_CODE_BI_ASSIGN + KETL_SYNTAX_NODE_TYPE_OPERATOR_OFFSET)
 
 KETL_DEFINE(KETLSyntaxNode) {
-	ptrdiff_t positionInSource;
+	uint32_t lineInSource;
+	uint32_t columnInSource;
 	uint32_t length;
 	KETLSyntaxNodeType type;
 	KETLSyntaxNode* nextSibling;

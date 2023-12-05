@@ -22,4 +22,8 @@ bool ketlHasNextToken(const KETLLexer* lexer);
 
 KETLToken* ketlGetNextToken(KETLLexer* lexer);
 
+inline size_t ketl_lexer_current_position(KETLLexer* lexer) {
+	return lexer->sourceIt - lexer->source;
+}
+
 #endif /*compiler_lexer_h*/
